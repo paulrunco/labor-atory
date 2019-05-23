@@ -1,15 +1,12 @@
 import pandas as pd
 import matplotlib.pyplot as plt
-
+import datetime as dt
 
 ## Definitions
-path_to_file = 'Labor Reporting_01_25_2019_083736.xlsx'
-parent_num = 'P0025311'
+path_to_file = 'Labor Reporting_05_22_2019_085819.xlsx'
+parent_num = 'P0042060'
 
-startTime = '01-07-2019'
-endTime = '01-8-2019'
-
-site = 'DTN'
+site = 'MTP'
 
 ## Helper functions
 def shortName(name):
@@ -23,22 +20,22 @@ def shortName(name):
 
     return short
 
-
 ## read labor report into pandas dataframe
 df = pd.read_excel(path_to_file)
 
 # filter to target parent order
-#order = df.loc[(df['ParentOrderNo'] == parent_num)]
+order = df.loc[(df['ParentOrderNo'] == parent_num)]
 
 # filter to target timeframe
-order = df.loc[(df['ClockIn'] >= startTime) & (df['ClockOut'] <= endTime) & (df['Site'] == site)]
 
+#order = df.loc[(df['ClockIn'] > startTime) & (df['ClockOut'] <= endTime) & (df['Site'] == site)]
 # get kit number
 kits = order['FGKits'].iloc[0]
 
 # get start and end times for order
-orderstart = order['ClockIn'].min()
-orderend = order['ClockOut'].max()
+#orderstart = order['ClockIn'].min()
+orderstart = order.loc[(order['Operation'] == 'CUT' + site)]['ClockIn'].min()
+orderend = order.loc[(order['Operation'] == 'KIT' + site)]['ClockOut'].max()
 
 orderlen = pd.Timedelta(orderend - orderstart).total_seconds()/3600
 
@@ -47,13 +44,18 @@ techs = order['EmpName'].unique()
 num_techs = len(techs)
 
 tech_times = []
+tech_time_labels = []
 names = []
 lxranges = []
 lcolors = []
 for tech in techs:
     techtable = order.loc[order['EmpName'] == tech][['Operation','ClockIn','ClockInDurationMin']]
     names.append(shortName(tech))
-    tech_times.append(round(techtable['ClockInDurationMin'].sum()/60,3)) # total time for tech
+    tech_time = round(techtable['ClockInDurationMin'].sum()/60,3) # total time for tech
+    tech_times.append(tech_time)
+    tech_pct = round(tech_time/orderlen*100,2)
+    tech_time_labels.append("{} ({}%)".format(tech_time, tech_pct))
+    
 
     lxrange = []
     color = []
@@ -131,11 +133,20 @@ myticks = []
 for myrange in myranges:
     myticks.append(myrange[0]+2.5)
 
+# tick to show hours of the day
+hour_ticks = []
+hour_ticks_labels = []
+for i in range(0, int(orderlen) + 1):
+    hour = dt.datetime(orderstart.year, orderstart.month, orderstart.day, orderstart.hour) + dt.timedelta(hours=1+i)
+    delta = pd.Timedelta(hour - orderstart).total_seconds()/3600
+    hour_ticks.append(delta)
+    hour_ticks_labels.append(hour.strftime('%H:%M'))
+
 ### Graphing
 
 ## Create graphs 
 # Two plots in one figure, one for labor, another for machine
-fig, (lx, mx) = plt.subplots(2, 1, sharex = True, gridspec_kw={'height_ratios':[num_techs,num_machs]})
+fig, (labor_plot, machine_plot) = plt.subplots(2, 1, sharex = True, gridspec_kw={'height_ratios':[num_techs,num_machs]})
 
 ## Adjust graph properties
 fig.suptitle('Order {} \n {}'.format(parent_num,kits), fontsize=10)
@@ -145,53 +156,65 @@ fig.subplots_adjust(left=0.15)
 fig.subplots_adjust(right=0.88)
 
 # add alternate axes
-lxa = lx.twinx()
-mxa = mx.twinx()
-lxb = lx.twiny()
+lxa = labor_plot.twinx()
+mxa = machine_plot.twinx()
+lxb = labor_plot.twiny()
 
 # labor subplot
 # left y axis
-lx.grid(True)
-lx.set_xlim(xmin, xmax)
-lx.set_ylim(0, lymax)
-lx.set_ylabel('Tech Name')
-lx.set_yticks(lyticks)
-lx.set_yticklabels(names, fontsize=6)
+labor_plot.grid(axis='y')
+labor_plot.set_xlim(xmin, xmax)
+labor_plot.set_ylim(0, lymax)
+labor_plot.set_ylabel('Tech Name')
+labor_plot.set_yticks(lyticks)
+labor_plot.set_yticklabels(names, fontsize=6)
 # right y axis
 lxa.set_ylabel('{} Labor Hours'.format(round(sum(tech_times),3)))
 lxa.set_ylim(0, lymax)
 lxa.set_yticks(lyticks)
-lxa.set_yticklabels(tech_times, fontsize=6)
+lxa.set_yticklabels(tech_time_labels, fontsize=6)
 # top x axis
 lxb.set_xlim(xmin, xmax)
 lxb.set_xticks([0, orderlen])
-lxb.set_xticklabels([orderstart.strftime('%m/%d/%y\n%H:%M'), orderend.strftime('%m/%d/%y\n%H:%M')], fontsize=8)
+order_start_label = orderstart.strftime('%m/%d/%y\n%H:%M')
+order_end_label = orderend.strftime('%m/%d/%y\n%H:%M')
+lxb.set_xticklabels([order_start_label, order_end_label], fontsize=8)
+# bottom x axis
+labor_plot.grid(axis='x')
+machine_plot.grid(axis='x')
+labor_plot.set_xticks(hour_ticks)
+labor_plot.set_xticklabels(hour_ticks_labels)
 
 # reference lines for start and end
-lx.axvline(x=0, color = 'g')
-mx.axvline(x=0, color = 'g')
-lx.axvline(x=orderlen, color='r')
-mx.axvline(x=orderlen, color = 'r')
+labor_plot.axvline(x=0, color = 'g')
+machine_plot.axvline(x=0, color = 'g')
+labor_plot.axvline(x=orderlen, color='r')
+machine_plot.axvline(x=orderlen, color = 'r')
+
+# reference lines for shifts
+#TO BE DONE
 
 # machine subplot
 # left y axis
-mx.grid(True)
-mx.set_ylim(0, mymax)
-mx.set_ylabel('Mach Name')
-mx.set_xlabel('{} Hours'.format(round(orderlen,3)))
-mx.set_yticks(myticks)
-mx.set_yticklabels(machs, fontsize=6)
+machine_plot.grid(axis='y')
+machine_plot.set_ylim(0, mymax)
+machine_plot.set_ylabel('Mach Name')
+machine_plot.set_xlabel('{} Hours'.format(round(orderlen,3)))
+machine_plot.set_yticks(myticks)
+machine_plot.set_yticklabels(machs, fontsize=6)
 # right y axis
 mxa.set_ylabel('{} Mach Hours'.format(round(sum(mach_times),3)))
 mxa.set_ylim(0,mymax)
 mxa.set_yticks(myticks)
 mxa.set_yticklabels(mach_times, fontsize=6)
+# bottom x axis
+
 
 ## insert data
 for i in range(0,len(techs)):
-    lx.broken_barh(lxranges[i], lyranges[i], facecolors=lcolors[i])
+    labor_plot.broken_barh(lxranges[i], lyranges[i], facecolors=lcolors[i])
 
 for i in range(0, len(machs)):
-    mx.broken_barh(mxranges[i], myranges[i], facecolors=mcolors[i])
+    machine_plot.broken_barh(mxranges[i], myranges[i], facecolors=mcolors[i])
 
 plt.show()
