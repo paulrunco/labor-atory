@@ -191,7 +191,7 @@ class App:
             fig, (labor_plot, machine_plot) = plt.subplots(2, 1, sharex = True, gridspec_kw={'height_ratios':[num_techs,num_machs]})
 
             ## Adjust graph properties
-            fig.suptitle('{} | {} Labor Hours | {} Duration Hours\n {}'.format(parent_num, total_tech_time, round(orderlen,3), kits), fontsize=10)
+            fig.suptitle('{} | {} Labor Hours | {} Duration Hours\n {}'.format(parent_num, round(total_tech_time,3), round(orderlen,3), kits), fontsize=10)
             # no spacing between subplots
             fig.subplots_adjust(hspace=0)
             fig.subplots_adjust(left=0.15)

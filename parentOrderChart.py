@@ -4,8 +4,8 @@ import matplotlib.pyplot as plt
 import datetime as dt
 
 ## Definitions
-path_to_file = 'Labor Reporting_05_22_2019_085819.xlsx'
-parent_num = 'P0042060'
+path_to_file = 'Labor Reporting_MRAS_07_08_2019_161806.xlsx'
+parent_num = 'P0038000'
 
 def shortName(name):
     """ Takes a "First Last" name string and returns "First L" """
@@ -144,7 +144,7 @@ if parent_num and path_to_file:
     fig, (labor_plot, machine_plot) = plt.subplots(2, 1, sharex = True, gridspec_kw={'height_ratios':[num_techs,num_machs]})
 
     ## Adjust graph properties
-    fig.suptitle('{} | {} Labor Hours | {} Duration Hours\n {}'.format(parent_num, total_tech_time, round(orderlen,3), kits), fontsize=10)
+    fig.suptitle('{} | {} Labor Hours | {} Duration Hours\n {}'.format(parent_num, round(total_tech_time,3), round(orderlen,3), kits), fontsize=10)
     # no spacing between subplots
     fig.subplots_adjust(hspace=0)
     fig.subplots_adjust(left=0.15)
