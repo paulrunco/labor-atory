@@ -10,7 +10,7 @@ class App:
 
     def __init__(self, master):
 
-        version = "Version 0.0"
+        version = "Version 0.1"
         tagline = "PRunco"
 
         self.master = master
@@ -98,7 +98,6 @@ class App:
                 names.append(shortName(tech))
                 tech_time = round(techtable['ClockInDurationMin'].sum()/60,3) # total time for tech
                 tech_times.append(tech_time)
-                total_tech_time = sum(tech_times)
                 tech_time_labels.append("{}".format(tech_time))
 
                 lxrange = []
@@ -120,6 +119,8 @@ class App:
                 lxranges.append(lxrange)
                 lcolors.append(color)
 
+            total_tech_time = sum(tech_times)
+            
             # what equipment was used
             machs = order['Machine'].unique()
             num_machs = len(machs)
@@ -149,6 +150,8 @@ class App:
                     
                 mxranges.append(mxrange)
                 mcolors.append(color)
+
+            total_mach_time = sum(mach_times)
 
             ### Define variables to draw graphs
             lymax = len(techs)*7
@@ -190,8 +193,13 @@ class App:
             # Two plots in one figure, one for labor, another for machine
             fig, (labor_plot, machine_plot) = plt.subplots(2, 1, sharex = True, gridspec_kw={'height_ratios':[num_techs,num_machs]})
 
+            ## Round and format constants for use on charts
+            total_tech_time_rounded = round(total_tech_time, 3)
+            total_mach_time_rounded = round(total_mach_time, 3)
+            orderlen_rounded = round(orderlen,3)
+            
             ## Adjust graph properties
-            fig.suptitle('{} | {} Labor Hours | {} Duration Hours\n {}'.format(parent_num, round(total_tech_time,3), round(orderlen,3), kits), fontsize=10)
+            fig.suptitle('{} | {} Labor Hours | {} Duration Hours\n {}'.format(parent_num, total_tech_time_rounded, orderlen_rounded, kits), fontsize=10)
             # no spacing between subplots
             fig.subplots_adjust(hspace=0)
             fig.subplots_adjust(left=0.15)
@@ -211,7 +219,7 @@ class App:
             labor_plot.set_yticks(lyticks)
             labor_plot.set_yticklabels(names, fontsize=6)
             # right y axis
-            lxa.set_ylabel('{} Labor Hours'.format(total_tech_time))
+            lxa.set_ylabel('{} Labor Hours'.format(total_tech_time_rounded))
             lxa.set_ylim(0, lymax)
             lxa.set_yticks(lyticks)
             lxa.set_yticklabels(tech_time_labels, fontsize=6)
@@ -248,11 +256,11 @@ class App:
             machine_plot.grid(axis='y')
             machine_plot.set_ylim(0, mymax)
             machine_plot.set_ylabel('Mach Name')
-            machine_plot.set_xlabel('{} Hours'.format(round(orderlen,3)))
+            machine_plot.set_xlabel('{} Hours'.format(orderlen_rounded))
             machine_plot.set_yticks(myticks)
             machine_plot.set_yticklabels(machs, fontsize=6)
             # right y axis
-            mxa.set_ylabel('{} Mach Hours'.format(round(sum(mach_times),3)))
+            mxa.set_ylabel('{} Mach Hours'.format((total_mach_time_rounded)))
             mxa.set_ylim(0,mymax)
             mxa.set_yticks(myticks)
             mxa.set_yticklabels(mach_times, fontsize=6)

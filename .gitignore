@@ -121,3 +121,6 @@ dmypy.json
 # Project Specifics to Ignore
 *.xlsx
 *.xls
+*.doc
+*.docx
+*.pdf
