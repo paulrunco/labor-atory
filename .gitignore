@@ -118,6 +118,9 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
+# Editor config
+.vscode
+
 # Project Specifics to Ignore
 *.xlsx
 *.xls
