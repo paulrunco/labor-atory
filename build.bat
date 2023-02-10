@@ -1,5 +1,5 @@
 pyinstaller --clean --onefile --windowed ^
     --distpath="dist/" ^
-    --icon="icons/icon.ico" ^
+    --icon="icon.ico" ^
     --name="LaborUtility" ^
     app.py
